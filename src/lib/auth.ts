@@ -18,9 +18,17 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         console.log("🔍 AUTH START: Attempting login for:", credentials?.email);
 
+        // ⚠️ CRITICAL FIX: Verify the exact name of your password field in prisma/schema.prisma.
+        // If it is named 'passwordHash' or 'hashedPassword', change 'password' below to match exactly.
         const user = await prisma.user.findUnique({
           where: { email: credentials?.email },
-          select: { id: true, email: true, name: true, role: true, password: true }
+          select: { 
+            id: true, 
+            email: true, 
+            name: true, 
+            role: true, 
+            passwordHash: true // <-- CHANGE THIS if your schema uses a different name (e.g., passwordHash: true)
+          }
         });
 
         if (!user) {
@@ -34,7 +42,9 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // ⚠️ ALSO CHANGE 'user.password' HERE if your schema field is named differently (e.g., user.passwordHash)
         const isValidPassword = await bcrypt.compare(credentials.password, user.password);
+        
         if (!isValidPassword) {
           console.log("❌ AUTH FAILED: Invalid password.");
           return null;
@@ -54,7 +64,6 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
-      // 🔥 UNCONDITIONAL LOG: This will print EVERY time the session is checked
       console.log("🔥 JWT CALLBACK TRIGGERED. Token currently has role:", token.role);
 
       if (user) {

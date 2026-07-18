@@ -20,11 +20,12 @@ const articles = {
 };
 
 interface BlogPostPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const article = articles[params.slug as keyof typeof articles];
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params;
+  const article = articles[slug as keyof typeof articles];
 
   if (!article) notFound();
 
@@ -34,7 +35,6 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         <Link href="/blog" className="inline-flex items-center text-primary hover:underline mb-8">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to News & Insights
         </Link>
-
         <div className="mb-8">
           <span className="text-sm font-semibold text-primary uppercase tracking-wide">{article.category}</span>
           <h1 className="text-3xl md:text-5xl font-heading font-bold text-dark mt-2 mb-4 leading-tight">
@@ -45,18 +45,15 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> {new Date(article.date).toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
         </div>
-
         {/* Featured Image */}
         <div className="relative h-64 md:h-96 w-full rounded-xl overflow-hidden mb-10 bg-grey">
           <Image src={article.image} alt={article.title} fill className="object-cover" />
         </div>
-
         {/* Content */}
-        <div 
+        <div
           className="prose prose-lg max-w-none text-gray-700 leading-relaxed mb-12"
-          dangerouslySetInnerHTML={{ __html: article.content }} 
+          dangerouslySetInnerHTML={{ __html: article.content }}
         />
-
         {/* Share Buttons */}
         <div className="flex items-center gap-4 pt-6 border-t border-grey-dark">
           <span className="text-sm font-semibold text-dark flex items-center gap-2">

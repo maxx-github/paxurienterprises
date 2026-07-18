@@ -10,7 +10,7 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      
+
       // 2. Vercel Blob (for uploaded images: products, fundis, projects)
       {
         protocol: 'https',
@@ -18,7 +18,7 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      
+
       // 3. Your custom domain (if you host images on your own server)
       {
         protocol: 'https',
@@ -32,7 +32,7 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      
+
       // 4. Cloudinary (if you decide to use it later)
       {
         protocol: 'https',
@@ -40,7 +40,7 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      
+
       // 5. AWS S3 (if you decide to use it later)
       {
         protocol: 'https',
@@ -48,7 +48,7 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      
+
       // 6. Local development (localhost)
       {
         protocol: 'http',
@@ -62,12 +62,10 @@ const nextConfig = {
     // Optional: Set image formats to generate
     formats: ['image/webp', 'image/avif'],
   },
-
   // Redirects (optional: force HTTPS in production)
   async redirects() {
     return [];
   },
-
   // Headers (optional: add security headers)
   async headers() {
     return [

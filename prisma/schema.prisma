@@ -1,0 +1,234 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CLIENT
+  FUNDI
+}
+
+enum SkillCategory {
+  MASON
+  CARPENTER
+  WELDER
+  PAINTER
+  ELECTRICIAN
+  PLUMBER
+  TILER
+  STEEL_FIXER
+  FOREMAN
+  QUANTITY_SURVEYOR
+  ARCHITECT
+  ENGINEER
+  GENERAL_LABOURER
+}
+
+enum ProductCategory {
+  CONSTRUCTION_MATERIALS
+  FINISHING_MATERIALS
+}
+
+enum QuoteStatus {
+  NEW
+  IN_PROGRESS
+  QUOTED
+  AWARDED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  phone         String?
+  role          Role      @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  labourProfile LabourProfile?
+  orders        Order[]
+}
+
+model LabourProfile {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  nationalId      String
+  county          String
+  skill           SkillCategory
+  yearsExperience Int
+  dailyRate       Float
+  monthlyRate     Float?
+  isAvailable     Boolean       @default(true)
+  
+  cvUrl           String
+  certUrls        String[]
+  photoUrl        String
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  applications    JobApplication[]
+}
+
+model JobPost {
+  id              String    @id @default(cuid())
+  title           String
+  skillRequired   SkillCategory
+  location        String
+  contractDuration String
+  workersNeeded   Int
+  budgetMin       Float
+  budgetMax       Float
+  deadline        DateTime
+  description     String
+  isActive        Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  applications    JobApplication[]
+}
+
+model JobApplication {
+  id              String            @id @default(cuid())
+  jobId           String
+  job             JobPost           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  labourProfileId String
+  labourProfile   LabourProfile     @relation(fields: [labourProfileId], references: [id], onDelete: Cascade)
+  
+  expectedRate    Float
+  coverLetterUrl  String?
+  status          ApplicationStatus @default(PENDING)
+  
+  appliedAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  description String
+  price       Float?
+  category    ProductCategory
+  images      String[]
+  stock       Int             @default(0)
+  isAvailable Boolean         @default(true)
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id                  String      @id @default(cuid())
+  userId              String?
+  user                User?       @relation(fields: [userId], references: [id])
+  
+  totalAmount         Float
+  mpesaReceiptNumber  String?
+  mpesaPhoneNumber    String
+  status              OrderStatus @default(PENDING_PAYMENT)
+  
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  items               OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  
+  quantity  Int
+  price     Float
+}
+
+model QuoteRequest {
+  id          String      @id @default(cuid())
+  fullName    String
+  companyName String?
+  phone       String
+  email       String
+  location    String
+  projectType String
+  budget      String?
+  startDate   DateTime?
+  description String
+  attachments String[]
+  
+  status      QuoteStatus @default(NEW)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  name            String
+  client          String?
+  location        String
+  category        String
+  description     String
+  images          String[]
+  completionDate  DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Tender {
+  id              String   @id @default(cuid())
+  title           String
+  category        String
+  closingDate     DateTime
+  description     String
+  eligibility     String
+  documentUrl     String
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

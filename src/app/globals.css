@@ -1,0 +1,72 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+  }
+  
+  body {
+    @apply bg-white text-black font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 rounded-md font-semibold hover:bg-primary-hover transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  .btn-secondary {
+    @apply bg-white text-primary border-2 border-primary px-6 py-3 rounded-md font-semibold hover:bg-primary hover:text-white transition-colors duration-200;
+  }
+  .card {
+    @apply bg-white rounded-lg shadow-md border border-grey-dark/50 p-6 hover:shadow-lg transition-shadow duration-200;
+  }
+}
+
+@layer utilities {
+  /* NEW: Premium Content Wrapper for Modern Margins */
+  .content-wrapper {
+    @apply w-full max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-grey;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+}
+
+/* Force content wrapper for all major sections */
+.content-wrapper {
+  width: 100%;
+  max-width: 1280px; /* 80rem */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem; /* 24px */
+  padding-right: 1.5rem; /* 24px */
+}
+
+@media (min-width: 640px) {
+  .content-wrapper { padding-left: 2rem; padding-right: 2rem; }
+}
+@media (min-width: 768px) {
+  .content-wrapper { padding-left: 3rem; padding-right: 3rem; }
+}
+@media (min-width: 1024px) {
+  .content-wrapper { padding-left: 4rem; padding-right: 4rem; }
+}

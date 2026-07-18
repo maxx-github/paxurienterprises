@@ -1,5 +1,6 @@
 // src/app/(labour)/track-applications/page.tsx
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client"; // ✅ 1. ADD THIS IMPORT
 import { Search, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,21 @@ interface TrackPageProps {
   searchParams: { phone?: string };
 }
 
+// ✅ 2. Define the exact shape of the data returned by your Prisma query
+type LabourProfileWithApplications = Prisma.LabourProfileGetPayload<{
+  include: {
+    user: true;
+    applications: {
+      include: { job: true };
+    };
+  };
+}>;
+
 export default async function TrackApplicationsPage({ searchParams }: TrackPageProps) {
   const phone = searchParams.phone || "";
-  let applications = [];
+  
+  // ✅ 3. Explicitly type the variables (This fixes the implicit 'any[]' error)
+  let applications: NonNullable<LabourProfileWithApplications>["applications"] = [];
   let fundiName = "";
 
   if (phone) {
@@ -74,12 +87,16 @@ export default async function TrackApplicationsPage({ searchParams }: TrackPageP
                 <h2 className="text-xl font-bold text-dark mb-4">Hello {fundiName}, here are your applications:</h2>
                 {applications.length > 0 ? (
                   <div className="space-y-4">
-                    {applications.map((app: any) => (
+                    {/* ✅ 4. Removed ': any' so TypeScript uses the correct inferred type */}
+                    {applications.map((app) => (
                       <Card key={app.id}>
                         <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                           <div>
-                            <h3 className="text-lg font-bold text-dark">{app.job.title}</h3>
-                            <p className="text-sm text-gray-500">{app.job.location} • Applied on {new Date(app.appliedAt).toLocaleDateString()}</p>
+                            {/* Added optional chaining (?.) and fallbacks (||) for safety */}
+                            <h3 className="text-lg font-bold text-dark">{app.job?.title || "Unknown Job"}</h3>
+                            <p className="text-sm text-gray-500">
+                              {app.job?.location || "Unknown Location"} • Applied on {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : "Recently"}
+                            </p>
                           </div>
                           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${
                             app.status === "HIRED" ? "bg-green-100 text-green-700" : 

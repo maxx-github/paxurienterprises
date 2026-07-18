@@ -1,23 +1,21 @@
 // src/app/admin/documents/page.tsx
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client"; // ✅ 1. ADD THIS IMPORT
+import { Prisma } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, User, Briefcase } from "lucide-react";
 
-// ✅ 2. Define Labour Profile type (Assuming 'user' relation exists here)
+// Define Labour Profile type
 type LabourProfileWithDocs = Prisma.LabourProfileGetPayload<{
   include: {
     user: true;
   };
 }>;
 
-// ✅ 3. Define Quote Request type using base model ONLY. 
-// This prevents the error if the relation is named differently or doesn't exist.
+// Define Quote Request type using base model ONLY
 type QuoteRequestWithDocs = Prisma.QuoteRequestGetPayload<{}>;
 
 export default async function AdminDocumentsPage() {
-  // ✅ 4. Explicitly type the arrays (Fixes the implicit 'any[]' error)
   let labourProfiles: LabourProfileWithDocs[] = [];
   let quoteRequests: QuoteRequestWithDocs[] = [];
 
@@ -29,9 +27,7 @@ export default async function AdminDocumentsPage() {
       },
     });
 
-    // Fetch Quote Requests (Base query without 'user' include to match the type)
-    // ⚠️ If your schema DOES have a user/client relation, change this to:
-    // include: { client: true } (replace 'client' with your actual relation name)
+    // Fetch Quote Requests
     quoteRequests = await prisma.quoteRequest.findMany({});
     
   } catch (error) {
@@ -61,10 +57,10 @@ export default async function AdminDocumentsPage() {
                       <p className="text-sm text-gray-500 mb-3">{profile.user?.phone || "No phone"}</p>
                       
                       <div className="flex flex-wrap gap-2">
-                        {/* ⚠️ ADJUST: Change 'idCopy' to your actual document field name in schema.prisma */}
+                        {/* ✅ FIXED: Changed variant="outline" to variant="secondary" */}
                         {/* @ts-expect-error - Dynamic field access based on your schema */}
                         {profile.idCopy ? (
-                          <Button variant="outline" size="sm" asChild>
+                          <Button variant="secondary" size="sm" asChild>
                             {/* @ts-expect-error */}
                             <a href={profile.idCopy} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                               <FileText className="h-4 w-4" /> ID Copy
@@ -74,10 +70,10 @@ export default async function AdminDocumentsPage() {
                           <span className="text-xs text-gray-400 py-2">No ID uploaded</span>
                         )}
 
-                        {/* ⚠️ ADJUST: Change 'certificate' to your actual document field name */}
+                        {/* ✅ FIXED: Changed variant="outline" to variant="secondary" */}
                         {/* @ts-expect-error */}
                         {profile.certificate ? (
-                          <Button variant="outline" size="sm" asChild>
+                          <Button variant="secondary" size="sm" asChild>
                             {/* @ts-expect-error */}
                             <a href={profile.certificate} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                               <FileText className="h-4 w-4" /> Certificate
@@ -106,7 +102,6 @@ export default async function AdminDocumentsPage() {
                 <div className="space-y-4">
                   {quoteRequests.map((quote) => (
                     <div key={quote.id} className="p-4 border border-grey-dark rounded-lg hover:bg-grey/50 transition-colors">
-                      {/* ⚠️ ADJUST: If your schema has a 'clientName' or 'contactName' field, use it here instead of quote.user?.name */}
                       <h3 className="font-bold text-dark">
                         {/* @ts-expect-error - Adjust to your actual field name (e.g., quote.clientName) */}
                         {quote.clientName || quote.contactName || `Quote #${quote.id}`}
@@ -117,10 +112,10 @@ export default async function AdminDocumentsPage() {
                       </p>
                       
                       <div className="flex flex-wrap gap-2">
-                        {/* ⚠️ ADJUST: Change 'attachmentUrl' to your actual document field name */}
+                        {/* ✅ FIXED: Changed variant="outline" to variant="secondary" */}
                         {/* @ts-expect-error */}
                         {quote.attachmentUrl || quote.documentUrl ? (
-                          <Button variant="outline" size="sm" asChild>
+                          <Button variant="secondary" size="sm" asChild>
                             {/* @ts-expect-error */}
                             <a href={quote.attachmentUrl || quote.documentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                               <Download className="h-4 w-4" /> View Attachment

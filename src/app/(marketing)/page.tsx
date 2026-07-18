@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      {/* 1. Hero Section (Full width background handled inside the component) */}
-      <HeroCarousel activeSection="hero" />
+      {/* 1. Hero Section */}
+      <HeroCarousel />
       
       {/* 2. Services Overview */}
       <section className="bg-grey py-20">

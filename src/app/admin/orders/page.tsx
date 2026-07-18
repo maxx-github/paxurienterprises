@@ -1,12 +1,16 @@
 // src/app/admin/orders/page.tsx
 import { prisma } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; // Assume a simple Badge component exists or use spans
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function AdminOrdersPage() {
+  // Fetch orders, including items and their associated products
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
-    include: { items: { include: { product: true } } },
+    include: { 
+      items: { 
+        include: { product: true } 
+      } 
+    },
   });
 
   return (
@@ -32,25 +36,40 @@ export default async function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id} className="border-b hover:bg-grey/50">
-                    <td className="px-6 py-4 font-medium text-dark">#{order.id.slice(-6).toUpperCase()}</td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4">{order.mpesaPhoneNumber}</td>
-                    <td className="px-6 py-4">{order.items.length} item(s)</td>
-                    <td className="px-6 py-4 font-semibold">{order.totalAmount.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-gray-500">{order.mpesaReceiptNumber || "Pending"}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        order.status === "PAID" ? "bg-green-100 text-green-700" : 
-                        order.status === "PENDING_PAYMENT" ? "bg-yellow-100 text-yellow-700" : 
-                        "bg-red-100 text-red-700"
-                      }`}>
-                        {order.status.replace('_', ' ')}
-                      </span>
+                {orders.length > 0 ? (
+                  orders.map((order) => (
+                    <tr key={order.id} className="border-b hover:bg-grey/50">
+                      <td className="px-6 py-4 font-medium text-dark">#{order.id.slice(-6).toUpperCase()}</td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4">{order.mpesaPhoneNumber || "N/A"}</td>
+                      <td className="px-6 py-4">{order.items.length} item(s)</td>
+                      <td className="px-6 py-4 font-semibold">
+                        {order.totalAmount.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {order.mpesaReceiptNumber || "Pending"}
+                      </td>
+                      <td className="px-6 py-4">
+                        {/* Using span with Tailwind classes instead of a missing Badge component */}
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          order.status === "PAID" ? "bg-green-100 text-green-700" : 
+                          order.status === "PENDING_PAYMENT" ? "bg-yellow-100 text-yellow-700" : 
+                          "bg-red-100 text-red-700"
+                        }`}>
+                          {order.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      No orders found.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

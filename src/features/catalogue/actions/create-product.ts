@@ -1,8 +1,10 @@
+// src/features/catalogue/actions/create-product.ts
 "use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { put } from "@vercel/blob";
+import { ProductCategory } from "@prisma/client"; // ✅ 1. IMPORT THE ENUM
 
 // ✅ CRITICAL FIX: 'prevState' MUST be the first argument when using useFormState
 export async function createProduct(prevState: any, formData: FormData) {
@@ -34,7 +36,7 @@ export async function createProduct(prevState: any, formData: FormData) {
         return { success: false, message: `File size is ${(imageFile.size / 1024 / 1024).toFixed(2)}MB. Max allowed is 5MB.` };
       }
 
-      // Sanitize filename (fixes issues with spaces/commas in "Basco emulsion...")
+      // Sanitize filename (fixes issues with spaces/commas in filenames)
       const sanitizedName = imageFile.name
         .replace(/[^a-zA-Z0-9.-]/g, '_')
         .toLowerCase();
@@ -59,7 +61,8 @@ export async function createProduct(prevState: any, formData: FormData) {
       data: {
         name,
         slug,
-        category,
+        // ✅ 2. CAST THE STRING TO THE PRISMA ENUM TYPE
+        category: category as ProductCategory, 
         price,
         stock,
         description,

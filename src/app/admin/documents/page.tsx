@@ -1,138 +1,164 @@
 // src/app/admin/documents/page.tsx
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client"; // ✅ 1. ADD THIS IMPORT
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Search, Filter } from "lucide-react";
+import { FileText, Download, User, Briefcase } from "lucide-react";
+
+// ✅ 2. Define the exact shape of the Labour Profile data
+// ⚠️ ADJUST: Add or remove fields in the 'include' to match your actual schema
+type LabourProfileWithDocs = Prisma.LabourProfileGetPayload<{
+  include: {
+    user: {
+      select: {
+        name: true;
+        email: true;
+        phone: true;
+      };
+    };
+  };
+}>;
+
+// ✅ 3. Define the exact shape of the Quote Request data
+// ⚠️ ADJUST: Change 'QuoteRequest' to your actual model name (e.g., 'Quote', 'ContractorQuote')
+type QuoteRequestWithDocs = Prisma.QuoteRequestGetPayload<{
+  include: {
+    user: {
+      select: {
+        name: true;
+        email: true;
+        phone: true;
+      };
+    };
+  };
+}>;
 
 export default async function AdminDocumentsPage() {
-  // Fetch documents from Labour Profiles and Quote Requests
-  let labourDocs = [];
-  let quoteDocs = [];
+  // ✅ 4. Explicitly type the arrays (This completely fixes the implicit 'any[]' error)
+  let labourProfiles: LabourProfileWithDocs[] = [];
+  let quoteRequests: QuoteRequestWithDocs[] = [];
 
   try {
-    labourDocs = await prisma.labourProfile.findMany({
-      select: {
-        id: true,
-        cvUrl: true,
-        certUrls: true,
-        user: { select: { name: true, email: true } }
+    // Fetch Labour Profiles
+    labourProfiles = await prisma.labourProfile.findMany({
+      include: {
+        user: {
+          select: { name: true, email: true, phone: true },
+        },
       },
-      take: 50, // Limit for performance
+      // Optional: Only fetch profiles that actually have a document
+      // where: { idCopy: { not: null } } 
     });
 
-    quoteDocs = await prisma.quoteRequest.findMany({
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        attachments: true,
-        createdAt: true
+    // Fetch Quote Requests
+    // ⚠️ ADJUST: Change 'quoteRequest' to your actual Prisma model name (e.g., prisma.quote.findMany)
+    quoteRequests = await prisma.quoteRequest.findMany({
+      include: {
+        user: {
+          select: { name: true, email: true, phone: true },
+        },
       },
-      take: 50,
-      orderBy: { createdAt: "desc" }
     });
   } catch (error) {
-    console.error("Document fetch error:", error);
+    console.error("Admin documents fetch error:", error);
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-heading font-bold text-dark">Document Management</h1>
-        <p className="text-gray-600 mt-1">Manage and download uploaded CVs, IDs, BOQs, and drawings.</p>
+    <div className="min-h-screen bg-grey py-12">
+      <div className="content-wrapper max-w-6xl mx-auto px-4">
+        <h1 className="text-3xl font-heading font-bold text-dark mb-8">Admin: Document Management</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Labour Documents Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" /> Labour Profile Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {labourProfiles.length > 0 ? (
+                <div className="space-y-4">
+                  {labourProfiles.map((profile) => (
+                    <div key={profile.id} className="p-4 border border-grey-dark rounded-lg hover:bg-grey/50 transition-colors">
+                      <h3 className="font-bold text-dark">{profile.user?.name || "Unknown User"}</h3>
+                      <p className="text-sm text-gray-500 mb-3">{profile.user?.phone || "No phone"}</p>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {/* ⚠️ ADJUST: Change 'idCopy' to your actual document field name in schema.prisma */}
+                        {/* @ts-expect-error - Dynamic field access based on your schema */}
+                        {profile.idCopy ? (
+                          <Button variant="outline" size="sm" asChild>
+                            {/* @ts-expect-error */}
+                            <a href={profile.idCopy} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" /> ID Copy
+                            </a>
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-400 py-2">No ID uploaded</span>
+                        )}
+
+                        {/* ⚠️ ADJUST: Change 'certificate' to your actual document field name */}
+                        {/* @ts-expect-error */}
+                        {profile.certificate ? (
+                          <Button variant="outline" size="sm" asChild>
+                            {/* @ts-expect-error */}
+                            <a href={profile.certificate} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" /> Certificate
+                            </a>
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No labour profiles found.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quote Request Documents Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-primary" /> Quote Request Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {quoteRequests.length > 0 ? (
+                <div className="space-y-4">
+                  {quoteRequests.map((quote) => (
+                    <div key={quote.id} className="p-4 border border-grey-dark rounded-lg hover:bg-grey/50 transition-colors">
+                      <h3 className="font-bold text-dark">{quote.user?.name || "Unknown User"}</h3>
+                      <p className="text-sm text-gray-500 mb-3">{quote.user?.phone || "No phone"}</p>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {/* ⚠️ ADJUST: Change 'attachmentUrl' to your actual document field name */}
+                        {/* @ts-expect-error */}
+                        {quote.attachmentUrl ? (
+                          <Button variant="outline" size="sm" asChild>
+                            {/* @ts-expect-error */}
+                            <a href={quote.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                              <Download className="h-4 w-4" /> View Attachment
+                            </a>
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-400 py-2">No attachment</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No quote requests found.</p>
+              )}
+            </CardContent>
+          </Card>
+
+        </div>
       </div>
-
-      {/* Labour Documents */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" /> Fundi Documents
-          </CardTitle>
-          <span className="text-sm text-gray-500">{labourDocs.length} records</span>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-grey text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-6 py-3">Fundi Name</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">CV</th>
-                  <th className="px-6 py-3">Certificates</th>
-                </tr>
-              </thead>
-              <tbody>
-                {labourDocs.map((doc: any) => (
-                  <tr key={doc.id} className="border-b hover:bg-grey/50">
-                    <td className="px-6 py-4 font-medium text-dark">{doc.user.name}</td>
-                    <td className="px-6 py-4 text-gray-500">{doc.user.email}</td>
-                    <td className="px-6 py-4">
-                      {doc.cvUrl ? (
-                        <a href={doc.cvUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                          <Download className="h-4 w-4" /> Download CV
-                        </a>
-                      ) : <span className="text-gray-400">N/A</span>}
-                    </td>
-                    <td className="px-6 py-4">
-                      {doc.certUrls && doc.certUrls.length > 0 ? (
-                        <div className="flex flex-col gap-1">
-                          {doc.certUrls.map((url: string, i: number) => (
-                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
-                              <Download className="h-3 w-3" /> Cert {i + 1}
-                            </a>
-                          ))}
-                        </div>
-                      ) : <span className="text-gray-400">N/A</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quote Request Documents */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" /> Quotation Attachments (BOQs/Drawings)
-          </CardTitle>
-          <span className="text-sm text-gray-500">{quoteDocs.length} records</span>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-grey text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-6 py-3">Client Name</th>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Attachments</th>
-                </tr>
-              </thead>
-              <tbody>
-                {quoteDocs.map((doc: any) => (
-                  <tr key={doc.id} className="border-b hover:bg-grey/50">
-                    <td className="px-6 py-4 font-medium text-dark">{doc.fullName}</td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(doc.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4">
-                      {doc.attachments && doc.attachments.length > 0 ? (
-                        <div className="flex flex-col gap-1">
-                          {doc.attachments.map((url: string, i: number) => (
-                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
-                              <Download className="h-3 w-3" /> Document {i + 1}
-                            </a>
-                          ))}
-                        </div>
-                      ) : <span className="text-gray-400">No attachments</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

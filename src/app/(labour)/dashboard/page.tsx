@@ -1,5 +1,5 @@
 // src/app/(labour)/dashboard/page.tsx
-import { prisma } from "@/lib/db"; // ✅ MUST BE @/lib/db
+import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,13 @@ export default async function LabourDashboardPage() {
                 <CardTitle className="text-lg flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Update Rates</CardTitle>
               </CardHeader>
               <CardContent>
-                <form action={updateFundiRates} className="space-y-4">
+                {/* ✅ FIXED: Wrapped in async function to satisfy Promise<void> type requirement */}
+                <form 
+                  action={async (formData: FormData) => {
+                    await updateFundiRates(formData);
+                  }} 
+                  className="space-y-4"
+                >
                   <input type="hidden" name="profileId" value={profile.id} />
                   <div>
                     <label className="text-xs font-medium text-gray-500">Daily Rate (KES)</label>

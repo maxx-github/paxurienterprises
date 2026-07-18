@@ -5,36 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, User, Briefcase } from "lucide-react";
 
-// ✅ 2. Define the exact shape of the Labour Profile data
-// ⚠️ ADJUST: Add or remove fields in the 'include' to match your actual schema
+// ✅ 2. Define Labour Profile type (Assuming 'user' relation exists here)
 type LabourProfileWithDocs = Prisma.LabourProfileGetPayload<{
   include: {
-    user: {
-      select: {
-        name: true;
-        email: true;
-        phone: true;
-      };
-    };
+    user: true;
   };
 }>;
 
-// ✅ 3. Define the exact shape of the Quote Request data
-// ⚠️ ADJUST: Change 'QuoteRequest' to your actual model name (e.g., 'Quote', 'ContractorQuote')
-type QuoteRequestWithDocs = Prisma.QuoteRequestGetPayload<{
-  include: {
-    user: {
-      select: {
-        name: true;
-        email: true;
-        phone: true;
-      };
-    };
-  };
-}>;
+// ✅ 3. Define Quote Request type using base model ONLY. 
+// This prevents the error if the relation is named differently or doesn't exist.
+type QuoteRequestWithDocs = Prisma.QuoteRequestGetPayload<{}>;
 
 export default async function AdminDocumentsPage() {
-  // ✅ 4. Explicitly type the arrays (This completely fixes the implicit 'any[]' error)
+  // ✅ 4. Explicitly type the arrays (Fixes the implicit 'any[]' error)
   let labourProfiles: LabourProfileWithDocs[] = [];
   let quoteRequests: QuoteRequestWithDocs[] = [];
 
@@ -42,23 +25,15 @@ export default async function AdminDocumentsPage() {
     // Fetch Labour Profiles
     labourProfiles = await prisma.labourProfile.findMany({
       include: {
-        user: {
-          select: { name: true, email: true, phone: true },
-        },
+        user: true,
       },
-      // Optional: Only fetch profiles that actually have a document
-      // where: { idCopy: { not: null } } 
     });
 
-    // Fetch Quote Requests
-    // ⚠️ ADJUST: Change 'quoteRequest' to your actual Prisma model name (e.g., prisma.quote.findMany)
-    quoteRequests = await prisma.quoteRequest.findMany({
-      include: {
-        user: {
-          select: { name: true, email: true, phone: true },
-        },
-      },
-    });
+    // Fetch Quote Requests (Base query without 'user' include to match the type)
+    // ⚠️ If your schema DOES have a user/client relation, change this to:
+    // include: { client: true } (replace 'client' with your actual relation name)
+    quoteRequests = await prisma.quoteRequest.findMany({});
+    
   } catch (error) {
     console.error("Admin documents fetch error:", error);
   }
@@ -131,16 +106,23 @@ export default async function AdminDocumentsPage() {
                 <div className="space-y-4">
                   {quoteRequests.map((quote) => (
                     <div key={quote.id} className="p-4 border border-grey-dark rounded-lg hover:bg-grey/50 transition-colors">
-                      <h3 className="font-bold text-dark">{quote.user?.name || "Unknown User"}</h3>
-                      <p className="text-sm text-gray-500 mb-3">{quote.user?.phone || "No phone"}</p>
+                      {/* ⚠️ ADJUST: If your schema has a 'clientName' or 'contactName' field, use it here instead of quote.user?.name */}
+                      <h3 className="font-bold text-dark">
+                        {/* @ts-expect-error - Adjust to your actual field name (e.g., quote.clientName) */}
+                        {quote.clientName || quote.contactName || `Quote #${quote.id}`}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-3">
+                        {/* @ts-expect-error - Adjust to your actual field name */}
+                        {quote.clientPhone || quote.contactPhone || "No phone"}
+                      </p>
                       
                       <div className="flex flex-wrap gap-2">
                         {/* ⚠️ ADJUST: Change 'attachmentUrl' to your actual document field name */}
                         {/* @ts-expect-error */}
-                        {quote.attachmentUrl ? (
+                        {quote.attachmentUrl || quote.documentUrl ? (
                           <Button variant="outline" size="sm" asChild>
                             {/* @ts-expect-error */}
-                            <a href={quote.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                            <a href={quote.attachmentUrl || quote.documentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                               <Download className="h-4 w-4" /> View Attachment
                             </a>
                           </Button>

@@ -1,4 +1,17 @@
+# Dependencies
 node_modules/
 .next/
+out/
+
+# Environment variables (KEEP YOUR SECRETS SAFE)
 .env.local
 .env
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

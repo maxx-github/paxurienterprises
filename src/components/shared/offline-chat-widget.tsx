@@ -21,13 +21,16 @@ export function OfflineChatWidget() {
     // Append hidden fields for the server action
     formData.append("subject", "Live Chat Inquiry");
     
-    const result = await submitContactForm(formData);
+    // ✅ FIXED: Pass 'null' as the first argument (prevState) to satisfy the 2-argument requirement
+    const result = await submitContactForm(null, formData);
     
     if (result.success) {
       setIsSent(true);
       setTimeout(() => {
         setIsSent(false);
         setIsOpen(false);
+        // Optional: reset the form here if needed
+        e.currentTarget.reset();
       }, 3000);
     }
     setIsPending(false);
@@ -63,7 +66,7 @@ export function OfflineChatWidget() {
                   placeholder="How can we help you?" 
                   required 
                   rows={3} 
-                  className="flex w-full rounded-md border border-grey-dark bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="flex w-full rounded-md border border-grey-dark bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 ></textarea>
                 <Button type="submit" variant="primary" size="sm" className="w-full" disabled={isPending}>
                   {isPending ? "Sending..." : <><Send className="mr-2 h-3 w-3" /> Send Message</>}

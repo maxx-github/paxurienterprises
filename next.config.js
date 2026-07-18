@@ -63,18 +63,6 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
 
-  // Experimental Features for Better Performance
-  experimental: {
-    // Optimize imports from large libraries
-    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
-  },
-
-  // Server Actions Configuration
-  serverActions: {
-    // Increase body size limit for file uploads (default is 1MB)
-    bodySizeLimit: '10mb',
-  },
-
   // Redirects (optional: force HTTPS in production)
   async redirects() {
     return [];

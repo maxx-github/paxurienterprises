@@ -1,9 +1,16 @@
 // src/app/admin/fundis/page.tsx
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client"; // ✅ 1. Add Prisma for strict typing
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Users } from "lucide-react";
+import { CheckCircle, XCircle, Users, Eye } from "lucide-react"; // ✅ 2. Add Eye icon
+import Link from "next/link"; // ✅ 3. Add Link component
 import { verifyFundi, rejectFundi } from "@/features/labour/actions/manage-fundi";
+
+// ✅ 4. Define the exact shape of the data (eliminates the need for 'any')
+type FundiWithUser = Prisma.LabourProfileGetPayload<{
+  include: { user: true };
+}>;
 
 export const dynamic = 'force-dynamic';
 
@@ -37,41 +44,63 @@ export default async function AdminFundisPage() {
                 </tr>
               </thead>
               <tbody>
-                {fundis.map((fundi: any) => (
-                  <tr key={fundi.id} className="border-b hover:bg-white transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-dark">{fundi.user.name}</div>
-                      <div className="text-xs text-gray-500">{fundi.user.email}</div>
-                    </td>
-                    <td className="px-6 py-4">{fundi.skill.replace('_', ' ')}</td>
-                    <td className="px-6 py-4">{fundi.county}</td>
-                    <td className="px-6 py-4">KES {fundi.dailyRate.toLocaleString()}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${fundi.isAvailable ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {fundi.isAvailable ? 'Verified' : 'Pending'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right flex justify-end gap-2">
-                      {!fundi.isAvailable && (
-                        <form action={async () => { "use server"; await verifyFundi(fundi.id); }}>
-                          <Button type="submit" variant="ghost" size="sm" className="text-green-600 hover:bg-green-50" title="Verify & Publish">
-                            <CheckCircle className="h-4 w-4" />
+                {fundis.length > 0 ? (
+                  fundis.map((fundi: FundiWithUser) => (
+                    <tr key={fundi.id} className="border-b hover:bg-white transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-dark">{fundi.user.name}</div>
+                        <div className="text-xs text-gray-500">{fundi.user.email}</div>
+                      </td>
+                      <td className="px-6 py-4">{fundi.skill.replace('_', ' ')}</td>
+                      <td className="px-6 py-4">{fundi.county}</td>
+                      <td className="px-6 py-4">KES {fundi.dailyRate.toLocaleString()}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          fundi.isAvailable ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {fundi.isAvailable ? 'Verified' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end items-center gap-2">
+                          
+                          {/* ✅ 5. NEW: View Public Profile Button */}
+                          <Button variant="ghost" size="sm" asChild title="View Public Profile">
+                            <Link href={`/talent/${fundi.id}`} className="text-blue-600 hover:bg-blue-50">
+                              <Eye className="h-4 w-4" />
+                            </Link>
                           </Button>
-                        </form>
-                      )}
-                      <form action={async () => { "use server"; await rejectFundi(fundi.id); }}>
-                        <Button type="submit" variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" title="Reject & Delete">
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </form>
+
+                          {/* Verify Action */}
+                          {!fundi.isAvailable && (
+                            // ✅ 6. Cleaned up: Using .bind() is the official Next.js pattern for passing IDs to server actions
+                            <form action={verifyFundi.bind(null, fundi.id)}>
+                              <Button type="submit" variant="ghost" size="sm" className="text-green-600 hover:bg-green-50" title="Verify & Publish">
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            </form>
+                          )}
+                          
+                          {/* Reject Action */}
+                          <form action={rejectFundi.bind(null, fundi.id)}>
+                            <Button type="submit" variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" title="Reject & Delete">
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </form>
+
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-gray-500">
+                      No fundi registrations found.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
-            {fundis.length === 0 && (
-              <div className="text-center py-12 text-gray-500">No fundi registrations found.</div>
-            )}
           </div>
         </CardContent>
       </Card>

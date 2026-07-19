@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Users, Calendar } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminJobsPage() {
   const jobs = await prisma.jobPost.findMany({ orderBy: { createdAt: "desc" } });
 

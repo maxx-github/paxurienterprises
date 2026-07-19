@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, Mail } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLeadsPage() {
   const quotes = await prisma.quoteRequest.findMany({
     orderBy: { createdAt: "desc" },

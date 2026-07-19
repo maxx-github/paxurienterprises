@@ -23,6 +23,8 @@ const mockProduct = {
   stock: 500,
 };
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }: ProductPageProps) {
   const product = mockProduct;
   return {

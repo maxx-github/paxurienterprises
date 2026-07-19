@@ -10,6 +10,7 @@ const mockJobs = [
   { id: "2", title: "Site Foreman for Commercial Block", skillRequired: "FOREMAN", location: "Westlands, Nairobi", contractDuration: "6 Months", workersNeeded: 1, budgetMin: 80000, budgetMax: 120000, deadline: "2024-12-15", description: "Looking for a certified foreman to manage a 4-story commercial build." },
 ];
 
+export const dynamic = 'force-dynamic';
 export default async function JobsPage() {
   let jobs = [];
   try {

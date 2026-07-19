@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/shared/product-card";
 import { prisma } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: "Product Catalogue | Paxuri Enterprises",
   description: "Browse high-quality construction and finishing materials.",

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Users } from "lucide-react";
 import { verifyFundi, rejectFundi } from "@/features/labour/actions/manage-fundi";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminFundisPage() {
   const fundis = await prisma.labourProfile.findMany({
     include: { user: true },

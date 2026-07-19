@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, MailOpen, Trash2 } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminMessagesPage() {
   const messages = await prisma.contactMessage.findMany({
     orderBy: { createdAt: "desc" },

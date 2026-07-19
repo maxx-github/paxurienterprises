@@ -9,6 +9,8 @@ interface OrderSuccessPageProps {
   searchParams: { orderId?: string };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function OrderSuccessPage({ searchParams }: OrderSuccessPageProps) {
   const orderId = searchParams.orderId;
   let order = null;

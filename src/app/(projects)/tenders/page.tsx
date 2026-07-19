@@ -9,6 +9,7 @@ const mockTenders = [
   { id: "2", title: "Supply and Delivery of Hardware Materials", category: "Private", closingDate: "2024-11-30", description: "Supply of cement, steel, and roofing materials for a residential estate.", eligibility: "Registered supplier with valid tax compliance." },
 ];
 
+export const dynamic = 'force-dynamic';
 export default async function TendersPage() {
   let tenders = [];
   try {

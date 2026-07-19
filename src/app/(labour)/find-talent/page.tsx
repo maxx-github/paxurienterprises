@@ -14,6 +14,7 @@ const mockFundis = [
   { id: "4", user: { name: "Peter Mwangi" }, skill: "CARPENTER", county: "Nairobi", yearsExperience: 6, dailyRate: 1800, isAvailable: true },
 ];
 
+export const dynamic = 'force-dynamic';
 export default async function FindTalentPage({ searchParams }: { searchParams: { skill?: string; search?: string } }) {
   const skill = (searchParams.skill || "") as string;
   const search = (searchParams.search || "") as string;

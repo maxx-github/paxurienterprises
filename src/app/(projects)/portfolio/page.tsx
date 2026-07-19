@@ -10,6 +10,7 @@ const mockProjects = [
   { id: "3", name: "Mombasa Road Warehouse", client: "LogiTech Kenya", location: "Nairobi South", category: "Industrial", images: ["/images/portfolio/warehouse.jpg"] },
 ];
 
+export const dynamic = 'force-dynamic';
 export default async function PortfolioPage() {
   let projects = [];
   try {

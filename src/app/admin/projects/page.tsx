@@ -6,6 +6,8 @@ import { Plus, Trash2, Building2 } from "lucide-react";
 import Link from "next/link";
 import { deleteProject } from "@/features/projects/actions/delete-project";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminProjectsPage() {
   const projects = await prisma.project.findMany({ orderBy: { createdAt: "desc" } });
 

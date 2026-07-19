@@ -17,6 +17,7 @@ type LabourProfileWithDetails = Prisma.LabourProfileGetPayload<{
   };
 }>;
 
+export const dynamic = 'force-dynamic';
 export default async function LabourDashboardPage() {
   // Apply the strict type (Fixes the implicit 'any' error)
   let profile: LabourProfileWithDetails | null = null;

@@ -10,7 +10,8 @@ const mockLogs = [
   { id: 4, action: "Logged In", target: "Admin Dashboard", user: "Admin John", time: "2 hours ago", icon: User, color: "text-gray-600" },
   { id: 5, action: "Deleted Tender", target: "Old Kiambu Project", user: "Super Admin", time: "Yesterday", icon: FileText, color: "text-red-600" },
 ];
-
+// Add this at the very top of the file, after imports
+export const dynamic = 'force-dynamic';
 export default function ActivityLogsPage() {
   return (
     <div className="p-6 md:p-8 space-y-6">

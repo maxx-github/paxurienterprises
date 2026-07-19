@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { registerFundi } from "@/features/labour/actions/register-fundi";
 import { SkillCategory } from "@prisma/client";
 
+export const dynamic = 'force-dynamic';
 export default function RegisterFundiPage() {
   const router = useRouter();
   // useFormState automatically handles passing FormData and managing pending/success states

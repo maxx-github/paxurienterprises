@@ -15,6 +15,8 @@ type LabourProfileWithDocs = Prisma.LabourProfileGetPayload<{
 // Define Quote Request type using base model ONLY
 type QuoteRequestWithDocs = Prisma.QuoteRequestGetPayload<{}>;
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDocumentsPage() {
   let labourProfiles: LabourProfileWithDocs[] = [];
   let quoteRequests: QuoteRequestWithDocs[] = [];

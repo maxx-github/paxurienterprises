@@ -1,13 +1,13 @@
 // src/app/admin/fundis/page.tsx
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client"; // ✅ 1. Add Prisma for strict typing
+import { Prisma } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Users, Eye } from "lucide-react"; // ✅ 2. Add Eye icon
-import Link from "next/link"; // ✅ 3. Add Link component
+import { CheckCircle, XCircle, Users, Eye } from "lucide-react";
+import Link from "next/link";
 import { verifyFundi, rejectFundi } from "@/features/labour/actions/manage-fundi";
 
-// ✅ 4. Define the exact shape of the data (eliminates the need for 'any')
+// Define the exact shape of the data (eliminates the need for 'any')
 type FundiWithUser = Prisma.LabourProfileGetPayload<{
   include: { user: true };
 }>;
@@ -64,25 +64,24 @@ export default async function AdminFundisPage() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
                           
-                          {/* ✅ 5. NEW: View Public Profile Button */}
+                          {/* View Public Profile Button */}
                           <Button variant="ghost" size="sm" asChild title="View Public Profile">
                             <Link href={`/talent/${fundi.id}`} className="text-blue-600 hover:bg-blue-50">
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
 
-                          {/* Verify Action */}
+                          {/* ✅ FIXED: Wrapped in async function to satisfy Promise<void> requirement */}
                           {!fundi.isAvailable && (
-                            // ✅ 6. Cleaned up: Using .bind() is the official Next.js pattern for passing IDs to server actions
-                            <form action={verifyFundi.bind(null, fundi.id)}>
+                            <form action={async () => { "use server"; await verifyFundi(fundi.id); }}>
                               <Button type="submit" variant="ghost" size="sm" className="text-green-600 hover:bg-green-50" title="Verify & Publish">
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
                             </form>
                           )}
                           
-                          {/* Reject Action */}
-                          <form action={rejectFundi.bind(null, fundi.id)}>
+                          {/* ✅ FIXED: Wrapped in async function to satisfy Promise<void> requirement */}
+                          <form action={async () => { "use server"; await rejectFundi(fundi.id); }}>
                             <Button type="submit" variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" title="Reject & Delete">
                               <XCircle className="h-4 w-4" />
                             </Button>

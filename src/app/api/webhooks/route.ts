@@ -1,16 +1,39 @@
 // src/app/api/webhooks/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-// Webhooks are typically POST requests
-export async function POST(request: Request) {
+/**
+ * Generic webhook receiver. Requires WEBHOOK_SECRET via
+ * Authorization: Bearer <secret> or x-webhook-secret header.
+ * Without WEBHOOK_SECRET configured, the endpoint rejects all requests.
+ */
+export async function POST(request: NextRequest) {
   try {
+    const expected = process.env.WEBHOOK_SECRET;
+    if (!expected) {
+      return NextResponse.json({ error: "Webhook endpoint not configured" }, { status: 503 });
+    }
+
+    const authHeader = request.headers.get("authorization");
+    const bearer =
+      authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+    const headerSecret = request.headers.get("x-webhook-secret");
+    const provided = bearer || headerSecret;
+
+    if (!provided || provided !== expected) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
-    console.log("Webhook received:", body);
-    
-    // TODO: Add your specific webhook processing logic here 
+    // Do not log full payloads (may contain PII / payment data)
+    console.log("Webhook received:", {
+      type: body?.type ?? body?.event ?? "unknown",
+      id: body?.id ?? null,
+      at: new Date().toISOString(),
+    });
+
+    // TODO: Add your specific webhook processing logic here
     // (e.g., verifying Stripe signatures, updating database, etc.)
-    
-    // Return 200 OK immediately so the webhook provider knows we received it
+
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error("Webhook processing error:", error);
@@ -18,7 +41,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Optional: A simple GET request to verify the route is active
 export async function GET() {
   return NextResponse.json({ message: "Webhook route is active" });
 }

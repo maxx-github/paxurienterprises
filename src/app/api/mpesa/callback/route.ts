@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     // Safaricom sends the data inside a 'Body' -> 'stkCallback' object
     const callback = body.Body?.stkCallback;
 
@@ -14,47 +14,85 @@ export async function POST(req: NextRequest) {
     }
 
     const { ResultCode, ResultDesc, CallbackMetadata } = callback;
-    const merchantRequestID = callback.MerchantRequestID;
     const checkoutRequestID = callback.CheckoutRequestID;
+
+    if (!checkoutRequestID || typeof checkoutRequestID !== "string") {
+      return NextResponse.json({ error: "Missing CheckoutRequestID" }, { status: 400 });
+    }
 
     // ResultCode 0 means success
     if (ResultCode === 0) {
-      // Extract M-Pesa Receipt Number from CallbackMetadata
-      const receiptItem = CallbackMetadata?.Item?.find(
-        (item: any) => item.Name === "MpesaReceiptNumber"
-      );
-      const mpesaReceiptNumber = receiptItem?.Value;
+      const items: { Name: string; Value: unknown }[] = CallbackMetadata?.Item || [];
+      const getMeta = (name: string) =>
+        items.find((item) => item.Name === name)?.Value;
 
-      // Find the order by CheckoutRequestID (You might need to add CheckoutRequestID to your Order model in Prisma for exact matching, 
-      // but for now, we'll update the latest pending order for that phone number, or you can store the checkoutRequestID in the DB).
-      // *Best Practice: Add `checkoutRequestID String?` to the Order model in Prisma.*
-      
-      // For this implementation, we will update the most recent PENDING_PAYMENT order.
-      const order = await prisma.order.findFirst({
-        where: { status: "PENDING_PAYMENT" },
-        orderBy: { createdAt: "desc" },
+      const mpesaReceiptNumber = getMeta("MpesaReceiptNumber");
+      const paidAmount = Number(getMeta("Amount"));
+
+      const order = await prisma.order.findUnique({
+        where: { checkoutRequestID },
       });
 
-      if (order) {
+      if (!order) {
+        console.warn(`Order not found for checkoutRequestID: ${checkoutRequestID}`);
+        // Still ACK so Safaricom stops retrying
+        return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
+      }
+
+      // Idempotency: already paid
+      if (order.status === "PAID") {
+        return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
+      }
+
+      // Verify paid amount matches order total (allow 1 KES rounding)
+      if (
+        !Number.isFinite(paidAmount) ||
+        Math.abs(paidAmount - order.totalAmount) > 1
+      ) {
+        console.error(
+          `Amount mismatch for order ${order.id}: paid=${paidAmount}, expected=${order.totalAmount}`
+        );
         await prisma.order.update({
           where: { id: order.id },
           data: {
-            status: "PAID",
-            mpesaReceiptNumber: mpesaReceiptNumber,
+            status: "CANCELLED",
+            mpesaReceiptNumber:
+              typeof mpesaReceiptNumber === "string"
+                ? String(mpesaReceiptNumber)
+                : undefined,
           },
         });
-        
-        // TODO: Trigger email/SMS notification to admin and user here
-        console.log(`Order ${order.id} paid successfully. Receipt: ${mpesaReceiptNumber}`);
+        return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
       }
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: "PAID",
+          mpesaReceiptNumber:
+            typeof mpesaReceiptNumber === "string" || typeof mpesaReceiptNumber === "number"
+              ? String(mpesaReceiptNumber)
+              : undefined,
+        },
+      });
+
+      console.log(`Order ${order.id} paid successfully. Receipt: ${mpesaReceiptNumber}`);
     } else {
+      // Payment failed / cancelled by user — mark order cancelled when we can match it
+      if (checkoutRequestID) {
+        await prisma.order.updateMany({
+          where: {
+            checkoutRequestID,
+            status: "PENDING_PAYMENT",
+          },
+          data: { status: "CANCELLED" },
+        });
+      }
       console.log(`Payment failed. ResultCode: ${ResultCode}, Desc: ${ResultDesc}`);
-      // Optionally update order status to CANCELLED
     }
 
     // Safaricom expects a 200 OK response to acknowledge receipt
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
-
   } catch (error) {
     console.error("M-Pesa Callback Error:", error);
     return NextResponse.json({ error: "Callback processing failed" }, { status: 500 });

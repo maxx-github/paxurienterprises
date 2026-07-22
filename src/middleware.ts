@@ -4,15 +4,32 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  // Strictly protect all routes starting with /admin
-  if (request.nextUrl.pathname.startsWith("/admin")) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
+  const { pathname } = request.nextUrl;
 
-    // Only allow users with the ADMIN role
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // Admin panel — ADMIN only
+  if (pathname.startsWith("/admin")) {
     if (!token || token.role !== "ADMIN") {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // Client dashboard — authenticated clients/admins
+  if (pathname.startsWith("/client-dashboard")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
+  // Fundi labour dashboard — authenticated fundis/admins
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+    if (!token) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }
@@ -21,6 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Apply to all routes except static assets, images, and API routes
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

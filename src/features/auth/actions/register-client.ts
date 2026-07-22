@@ -17,14 +17,18 @@ export async function registerClient(formData: FormData) {
     }
 
     // 2. Extract and Validate Data
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
+    const name = (formData.get("name") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+    const phone = (formData.get("phone") as string)?.trim();
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (!name || !email || !phone || !password) {
       return { success: false, message: "All required fields must be filled." };
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { success: false, message: "Please enter a valid email address." };
     }
 
     if (password !== confirmPassword) {
@@ -41,8 +45,8 @@ export async function registerClient(formData: FormData) {
       return { success: false, message: "An account with this email already exists." };
     }
 
-    // 4. Hash Password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 4. Hash Password (cost 12)
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // 5. Create User in Database
     await prisma.user.create({

@@ -4,65 +4,62 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { put } from "@vercel/blob";
-import { ProductCategory } from "@prisma/client"; // ✅ 1. IMPORT THE ENUM
+import { ProductCategory } from "@prisma/client";
+import { requireAdmin, forbiddenResult, unauthorizedResult } from "@/lib/auth-guards";
 
-// ✅ CRITICAL FIX: 'prevState' MUST be the first argument when using useFormState
+const ALLOWED_CATEGORIES = new Set(Object.values(ProductCategory));
+
 export async function createProduct(prevState: any, formData: FormData) {
   try {
-    // 1. Extract data from FormData
-    const name = formData.get("name") as string;
+    await requireAdmin();
+
+    const name = (formData.get("name") as string)?.trim();
     const category = formData.get("category") as string;
     const price = parseFloat(formData.get("price") as string);
-    const stock = parseInt(formData.get("stock") as string);
-    const description = formData.get("description") as string;
+    const stock = parseInt(formData.get("stock") as string, 10);
+    const description = (formData.get("description") as string)?.trim() || "";
     const imageFile = formData.get("image") as File;
 
-    // 2. Basic Validation
-    if (!name || isNaN(price) || isNaN(stock)) {
+    if (!name || isNaN(price) || price < 0 || isNaN(stock) || stock < 0) {
       return { success: false, message: "Please fill in all required fields with valid numbers." };
+    }
+
+    if (!ALLOWED_CATEGORIES.has(category as ProductCategory)) {
+      return { success: false, message: "Invalid product category." };
     }
 
     let imageUrl = "";
 
-    // 3. Handle Image Upload (if a file was provided)
     if (imageFile && imageFile.size > 0) {
       const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
       if (!allowedTypes.includes(imageFile.type)) {
-        return { success: false, message: `Invalid file type: ${imageFile.type}. Only JPG, PNG, and WEBP are allowed.` };
+        return { success: false, message: "Invalid file type. Only JPG, PNG, and WEBP are allowed." };
       }
 
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       if (imageFile.size > maxSize) {
-        return { success: false, message: `File size is ${(imageFile.size / 1024 / 1024).toFixed(2)}MB. Max allowed is 5MB.` };
+        return { success: false, message: "File size exceeds the 5MB limit." };
       }
 
-      // Sanitize filename (fixes issues with spaces/commas in filenames)
       const sanitizedName = imageFile.name
-        .replace(/[^a-zA-Z0-9.-]/g, '_')
+        .replace(/[^a-zA-Z0-9.-]/g, "_")
         .toLowerCase();
-      
       const fileName = `${Date.now()}-${sanitizedName}`;
-      console.log(`[UPLOAD] Starting upload for: ${fileName}`);
 
-      // Upload to Vercel Blob
       const blob = await put(`products/${fileName}`, imageFile, {
         access: "public",
       });
-      
+
       imageUrl = blob.url;
-      console.log(`[UPLOAD] Success! URL: ${imageUrl}`);
     }
 
-    // 4. Generate Slug
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-    // 5. Save to Database
     await prisma.product.create({
       data: {
         name,
         slug,
-        // ✅ 2. CAST THE STRING TO THE PRISMA ENUM TYPE
-        category: category as ProductCategory, 
+        category: category as ProductCategory,
         price,
         stock,
         description,
@@ -71,21 +68,19 @@ export async function createProduct(prevState: any, formData: FormData) {
       },
     });
 
-    // 6. Revalidate and Return Success
     revalidatePath("/admin/products");
     revalidatePath("/catalogue");
     return { success: true, message: "Product created successfully!" };
-    
   } catch (error: any) {
-    console.error("========================================");
-    console.error("CREATE PRODUCT ERROR DETAILS:");
-    console.error(error);
-    console.error("========================================");
+    if (error?.message === "UNAUTHORIZED") return unauthorizedResult();
+    if (error?.message === "FORBIDDEN") return forbiddenResult();
 
-    if (error.code === 'P2002') {
+    console.error("CREATE PRODUCT ERROR:", error);
+
+    if (error.code === "P2002") {
       return { success: false, message: "A product with this exact name already exists." };
     }
-    
-    return { success: false, message: `Server Error: ${error.message || "Unknown error occurred"}` };
+
+    return { success: false, message: "Failed to create product. Please try again." };
   }
 }

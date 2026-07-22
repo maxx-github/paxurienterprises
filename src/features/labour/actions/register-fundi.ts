@@ -30,21 +30,30 @@ export async function registerFundi(prevState: any, formData: FormData) {
       return { success: false, message: "Please fill in all required fields." };
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const emailNormalized = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalized)) {
+      return { success: false, message: "Please enter a valid email address." };
+    }
+
+    if (password.length < 8) {
+      return { success: false, message: "Password must be at least 8 characters long." };
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email: emailNormalized } });
     if (existingUser) {
       return { success: false, message: "An account with this email already exists." };
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
     // Create User and LabourProfile in a single transaction
     await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
-          name,
-          email,
+          name: name.trim(),
+          email: emailNormalized,
           passwordHash,
-          phone,
+          phone: phone?.trim() || null,
           role: "FUNDI",
         },
       });

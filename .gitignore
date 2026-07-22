@@ -4,9 +4,14 @@ node_modules/
 out/
 
 # Environment variables (KEEP YOUR SECRETS SAFE)
+# NOTE: .env was previously tracked — rotate any credentials that were exposed
 .env.local
 .env
 .env.production
+.env*.local
+
+# TypeScript build info
+*.tsbuildinfo
 
 # OS files
 .DS_Store

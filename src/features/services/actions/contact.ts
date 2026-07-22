@@ -16,14 +16,18 @@ export async function submitContactForm(prevState: any, formData: FormData) {
       return { success: false, message: "Please fill in all required fields." };
     }
 
+    if (name.length > 200 || email.length > 320 || phone.length > 40 || subject.length > 300 || message.length > 5000) {
+      return { success: false, message: "One or more fields exceed the maximum allowed length." };
+    }
+
     // Save to database
     await prisma.contactMessage.create({
       data: {
-        name,
-        email,
-        phone,
-        subject,
-        message,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        subject: subject.trim(),
+        message: message.trim(),
       },
     });
 

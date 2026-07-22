@@ -153,12 +153,13 @@ model Order {
   id                  String      @id @default(cuid())
   userId              String?
   user                User?       @relation(fields: [userId], references: [id])
-  
+
   totalAmount         Float
   mpesaReceiptNumber  String?
   mpesaPhoneNumber    String
+  checkoutRequestID   String?     @unique
   status              OrderStatus @default(PENDING_PAYMENT)
-  
+
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 

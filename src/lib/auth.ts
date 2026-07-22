@@ -14,23 +14,24 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("❌ AUTH FAILED: Missing email or password.");
           return null;
         }
 
+        const email = credentials.email.trim().toLowerCase();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
           select: {
             id: true,
             email: true,
             name: true,
             role: true,
-            passwordHash: true
-          }
+            passwordHash: true,
+          },
         });
 
-        if (!user) {
-          console.log("❌ AUTH FAILED: User not found in database.");
+        // Generic failure — do not log which check failed (avoids credential fishing via logs).
+        if (!user?.passwordHash) {
           return null;
         }
 
@@ -40,7 +41,6 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isValidPassword) {
-          console.log("❌ AUTH FAILED: Invalid password.");
           return null;
         }
 
@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role
+          role: user.role,
         };
       }
     })

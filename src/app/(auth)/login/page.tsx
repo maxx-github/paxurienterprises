@@ -1,4 +1,4 @@
-// src/app/login/page.tsx
+// src/app/(auth)/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,8 +6,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@paxuri-enterprises.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function LoginPage() {
 
     const result = await signIn("credentials", {
       redirect: false,
-      email,
+      email: email.trim().toLowerCase(),
       password,
     });
 
@@ -28,15 +28,18 @@ export default function LoginPage() {
     if (result?.error) {
       setError("Invalid email or password.");
     } else {
-      router.push("/admin");
+      // Role-based destination is resolved server-side via session callback consumers;
+      // default to home and let protected routes redirect as needed.
+      router.push("/");
+      router.refresh();
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md w-96 space-y-4">
-        <h1 className="text-2xl font-bold text-center text-gray-800">Admin Login</h1>
-        
+        <h1 className="text-2xl font-bold text-center text-gray-800">Sign In</h1>
+
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
         <div>
@@ -45,6 +48,7 @@ export default function LoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             className="mt-1 w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
             required
           />
@@ -56,6 +60,7 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
             className="mt-1 w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
             required
           />

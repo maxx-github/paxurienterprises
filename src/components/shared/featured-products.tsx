@@ -6,14 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingCart, Eye } from "lucide-react";
 
 // Mock data (Will be replaced by Prisma DB query later)
-const featuredProducts = [
-  { id: "1", name: "Bamburi Cement (50kg)", price: 750, image: "/images/products/cement.jpg", category: "Construction" },
+/*const featuredProducts = [
+  { id: "1", name: "Basco Emulsion White Soft & White Cream (4L)", price: 450, image: "/images/products/4l-basco-emulsion-white-soft-white-cream-450.jpg", category: "Construction" },
   { id: "2", name: "12mm Steel Bars (Bundle)", price: 8500, image: "/images/products/steel.jpg", category: "Construction" },
   { id: "3", name: "Premium Ceramic Tiles (sqm)", price: 1200, image: "/images/products/tiles.jpg", category: "Finishing" },
 ];
+*/
 
-export function FeaturedProducts() {
-  return (
+
+/*export function FeaturedProducts() {*/
+/*  return (
     <section className="py-20 bg-white">
       <div className="content-wrapper">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">

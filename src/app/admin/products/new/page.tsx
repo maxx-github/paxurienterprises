@@ -1,17 +1,16 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { useFormState } from "react-dom";
+import { useActionState } from "react"; // React 19 standard (replaces useFormState)
 import { createProduct } from "@/features/catalogue/actions/create-product";
 import Link from "next/link";
 
 export default function CreateProductPage() {
-  const [state, formAction, isPending] = useFormState(createProduct, null);
+  const [state, formAction, isPending] = useActionState(createProduct, null);
   
-  // 1. Create a reference to the form element
   const formRef = useRef<HTMLFormElement>(null);
 
-  // 2. Automatically reset the form when the submission is successful
+  // Automatically reset the form when the submission is successful
   useEffect(() => {
     if (state?.success && formRef.current) {
       formRef.current.reset();
@@ -27,13 +26,11 @@ export default function CreateProductPage() {
         </Link>
       </div>
 
-      {/* 3. Attach the ref to the form */}
       <form 
         ref={formRef}
         action={formAction} 
         className="space-y-5 bg-white p-6 rounded-lg shadow-sm border border-gray-200"
       >
-        
         {/* Product Name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -116,14 +113,16 @@ export default function CreateProductPage() {
 
         {/* Image Upload */}
         <div>
-          <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-            Product Image
+          <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1">
+            Product Images <span className="text-red-500">*</span>
           </label>
           <input
             type="file"
-            name="image"
-            id="image"
+            name="images"
+            id="images"
             accept="image/jpeg, image/png, image/webp"
+            multiple
+            required
             className="block w-full text-sm text-gray-500
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
@@ -132,7 +131,7 @@ export default function CreateProductPage() {
               hover:file:bg-blue-100 cursor-pointer"
           />
           <p className="mt-1 text-xs text-gray-500">
-            Accepted: JPG, PNG, WEBP. Max size: 5MB.
+            Accepted: JPG, PNG, WEBP. Max size: 5MB per image. You can select multiple.
           </p>
         </div>
 
